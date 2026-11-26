@@ -7,7 +7,8 @@ const arms = [
 
 export function createArmOverlay(canvas, video) {
   const context = canvas.getContext('2d');
-  let landmarks;
+  let poses = [];
+  let poseColors = [];
 
   function draw() {
     if (!context) return;
@@ -22,7 +23,7 @@ export function createArmOverlay(canvas, video) {
     context.clearRect(0, 0, pixelWidth, pixelHeight);
 
     const { videoWidth, videoHeight } = video;
-    if (!landmarks || !width || !height || !videoWidth || !videoHeight) return;
+    if (!width || !height || !videoWidth || !videoHeight) return;
 
     const scale = Math.min(width / videoWidth, height / videoHeight);
     const imageWidth = videoWidth * scale;
@@ -33,8 +34,10 @@ export function createArmOverlay(canvas, video) {
     context.lineCap = 'round';
     context.lineJoin = 'round';
 
-    for (const { joints, color } of arms) {
-      if (!joints.every((joint) => isVisibleLandmark(landmarks[joint]))) continue;
+    poses.forEach((landmarks, pose) => arms.forEach(({ joints, color: armColor }) => {
+      if (!landmarks) return;
+      const color = poseColors[pose] ?? armColor;
+      if (!joints.every((joint) => isVisibleLandmark(landmarks[joint]))) return;
       const points = joints.map((joint) => {
         const { x, y } = landmarks[joint];
         return [left + (1 - x) * imageWidth, top + y * imageHeight];
@@ -77,14 +80,16 @@ export function createArmOverlay(canvas, video) {
         context.fill();
         context.stroke();
       }
-    }
+    }));
   }
 
   new ResizeObserver(draw).observe(canvas);
 
   return {
-    update(points) {
-      landmarks = points;
+    // Each pose uses its own color when given one, otherwise one color per arm.
+    update(nextPoses = [], colors = []) {
+      poses = nextPoses;
+      poseColors = colors;
       draw();
     },
   };

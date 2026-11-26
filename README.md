@@ -11,6 +11,10 @@ Jogo de webcam para macOS e Windows. Faça o movimento 6–7 e ganhe um ponto de
 
 Clique no botão de quatro cantos na webcam para jogar em tela cheia. O placar fica no alto da imagem, e o traçado mostra onde o detector vê cada braço. O MediaPipe processa a câmera no próprio computador.
 
+## Modo batalha
+
+Clique em **Batalha** no topo para jogar em dois. A câmera ganha uma linha no meio: o Jogador 1 fica do lado esquerdo e o Jogador 2 do lado direito. Cada um conta pela própria linha do cotovelo, e quem chegar a 100 de aura primeiro vence. Evite outras pessoas no fundo, porque o detector acompanha só duas.
+
 ## Desenvolvimento
 
 Use Node.js 22.12 ou mais recente. Instale as dependências e abra a versão desktop.

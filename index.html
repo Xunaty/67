@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-game="solo">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,9 +16,15 @@
     <header class="site-header">
       <div class="shell header-inner">
         <div class="brand"><span class="brand-icon" aria-hidden="true"><i class="bolt"></i></span> Aura Arcade</div>
+        <div class="header-actions">
+        <div class="mode-switch" role="group" aria-label="Modo de jogo">
+          <button type="button" data-game="solo" aria-pressed="true">Solo</button>
+          <button type="button" data-game="battle" aria-pressed="false">Batalha</button>
+        </div>
         <button class="sound-button" id="sound" type="button" aria-pressed="true">
           <span class="sound-icon" aria-hidden="true"></span><span>Som</span><span class="sound-state" id="sound-state" aria-hidden="true">Ligado</span>
         </button>
+        </div>
       </div>
     </header>
 
@@ -28,12 +34,26 @@
         <p>Faça o 6–7 na frente da câmera e acumule aura.</p>
       </div>
 
-      <section class="scoreboard" aria-labelledby="score-label">
+      <section class="scoreboard solo-only" aria-labelledby="score-label">
         <div class="score-top">
           <div class="score-label" id="score-label"><span class="score-icon" aria-hidden="true"><i class="bolt"></i></span> Sua aura</div>
           <div class="score-total"><output id="score" aria-label="Aura acumulada" aria-live="off">0</output><span> / 1.000</span></div>
         </div>
         <progress id="progress" aria-label="Progresso até 1.000 de aura" max="1000" value="0"></progress>
+      </section>
+
+      <section class="scoreboard battle-board battle-only" aria-label="Placar da batalha">
+        <div class="player" data-player="1">
+          <div class="player-name">Jogador 1 <small>lado esquerdo</small></div>
+          <div class="score-total"><output id="score-p1" aria-label="Aura do jogador 1">0</output><span> / 100</span></div>
+          <progress id="progress-p1" aria-label="Progresso do jogador 1" max="100" value="0"></progress>
+        </div>
+        <span class="versus" aria-hidden="true">VS</span>
+        <div class="player" data-player="2">
+          <div class="player-name">Jogador 2 <small>lado direito</small></div>
+          <div class="score-total"><output id="score-p2" aria-label="Aura do jogador 2">0</output><span> / 100</span></div>
+          <progress id="progress-p2" aria-label="Progresso do jogador 2" max="100" value="0"></progress>
+        </div>
       </section>
 
       <div class="game-grid">
@@ -46,9 +66,11 @@
             <video id="video" autoplay muted playsinline aria-label="Imagem ao vivo da sua câmera"></video>
             <canvas id="arm-overlay" class="arm-overlay" aria-hidden="true"></canvas>
             <div class="preview-hud">
-              <div class="preview-score" aria-hidden="true"><i class="bolt"></i><span id="preview-score">0</span><small> / 1.000</small></div>
+              <div class="preview-score battle-only" aria-hidden="true"><span class="p1" id="preview-p1">0</span><small>×</small><span class="p2" id="preview-p2">0</span></div>
+              <div class="preview-score solo-only" aria-hidden="true"><i class="bolt"></i><span id="preview-score">0</span><small> / 1.000</small></div>
               <button type="button" id="fullscreen-toggle" class="fullscreen-toggle" aria-label="Tela cheia" title="Tela cheia"><i aria-hidden="true"></i></button>
             </div>
+            <div class="battle-divider battle-only" aria-hidden="true"></div>
             <div class="frame-marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             <div class="camera-controls">
               <span class="viewfinder-icon" aria-hidden="true"><i class="video-icon"></i></span>
@@ -72,6 +94,7 @@
           <ol class="steps" role="list">
             <li>Levante os antebraços com as palmas pra cima.</li>
             <li>Suba uma mão enquanto a outra desce, passando da linha do cotovelo.</li>
+            <li class="battle-only">Na batalha, cada um fica de um lado da linha do meio. Quem chegar a 100 primeiro vence.</li>
           </ol>
           <div class="point-rule"><span>+1</span> cada vez que a mão sobe da linha do cotovelo</div>
         </aside>
@@ -83,7 +106,7 @@
       <div class="victory-body">
         <img src="./assets/tigre-arco-iris.webp" alt="Tigre saltando na frente de um arco-íris" width="800" height="534">
         <h2 id="victory-title">Farmou aura!</h2>
-        <p>Você chegou a 1.000 de aura.</p>
+        <p id="victory-text">Você chegou a 1.000 de aura.</p>
         <button class="primary-button" id="restart" type="button">Jogar de novo</button>
       </div>
     </dialog>

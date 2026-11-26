@@ -14,6 +14,17 @@ export function wristSide(elbow, wrist) {
   return null;
 }
 
+// Battle mode: player 1 owns the left half of the mirrored screen, player 2 the right half.
+export function assignPlayers(poses = []) {
+  const players = [undefined, undefined];
+  const placed = poses
+    .map((pose) => ({ pose, screenX: 1 - (pose[11].x + pose[12].x) / 2 }))
+    .sort((a, b) => a.screenX - b.screenX);
+  if (placed.length >= 2) [players[0], players[1]] = [placed[0].pose, placed[1].pose];
+  else if (placed.length === 1) players[placed[0].screenX < 0.5 ? 0 : 1] = placed[0].pose;
+  return players;
+}
+
 export function createGestureCounter() {
   let sides;
 

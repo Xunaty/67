@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createGestureCounter } from './gesture.js';
+import { assignPlayers, createGestureCounter } from './gesture.js';
 
 // Elbows sit at y = 0.46; smaller y is higher on screen.
 function arms(leftWristY, rightWristY) {
@@ -53,4 +53,22 @@ test('forgets an arm that leaves the frame or after a restart', () => {
   gesture.update(bothDown);
   gesture.reset();
   assert.equal(gesture.update(rightUp).scored, false);
+});
+
+test('splits battle players by the half of the mirrored screen they stand in', () => {
+  // Camera x 0.75 shows on the left of the mirrored screen.
+  const person = (x) => {
+    const pose = [];
+    pose[11] = { x: x + 0.05, y: 0.3 };
+    pose[12] = { x: x - 0.05, y: 0.3 };
+    return pose;
+  };
+  const onLeft = person(0.75);
+  const onRight = person(0.25);
+
+  assert.deepEqual(assignPlayers([onRight, onLeft]), [onLeft, onRight]);
+  assert.deepEqual(assignPlayers([onRight]), [undefined, onRight]);
+  assert.deepEqual(assignPlayers([onLeft]), [onLeft, undefined]);
+  assert.deepEqual(assignPlayers([]), [undefined, undefined]);
+  assert.deepEqual(assignPlayers(undefined), [undefined, undefined]);
 });

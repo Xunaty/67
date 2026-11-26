@@ -15,7 +15,7 @@ function cameraError(cause) {
   }
 }
 
-export async function startCamera(video, { onFrame, onError }, signal) {
+export async function startCamera(video, { onFrame, onError, numPoses = 1 }, signal) {
   signal?.throwIfAborted();
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error('Abra o app por HTTPS ou localhost em um navegador com acesso à câmera.');
@@ -81,7 +81,7 @@ export async function startCamera(video, { onFrame, onError }, signal) {
         onError(new Error('O rastreamento parou. Ligue a câmera novamente para continuar.', { cause }));
         return;
       }
-      onFrame(result.landmarks[0], now);
+      onFrame(result.landmarks, now);
     }
     if (landmarker) frameRequest = requestAnimationFrame(detect);
   }
@@ -123,6 +123,7 @@ export async function startCamera(video, { onFrame, onError }, signal) {
       landmarker = await PoseLandmarker.createFromOptions(files, {
         baseOptions: { modelAssetPath: MODEL_URL },
         runningMode: 'VIDEO',
+        numPoses,
       });
     } catch (cause) {
       throw new Error('Não foi possível carregar o rastreamento. Feche o aplicativo e abra de novo.', { cause });
