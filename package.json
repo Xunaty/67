@@ -1,0 +1,22 @@
+{
+  "name": "farmador-de-aura",
+  "productName": "Farmador de Aura",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "desktop.js",
+  "scripts": {
+    "start": "electron .",
+    "web": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "test": "node --test gesture.test.js",
+    "build:mac": "node build-desktop.js darwin",
+    "build:windows": "node build-desktop.js win32"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.21"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "45.5.0"
+  }
+}
