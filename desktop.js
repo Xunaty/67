@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, session } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, session, systemPreferences } from 'electron';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 
@@ -76,8 +76,12 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((contents, permission, reply, details) => {
     const cameraOnly = permission === 'media' &&
       details.mediaTypes?.length === 1 && details.mediaTypes[0] === 'video';
-    reply(Boolean(isAppPage(contents?.getURL()) && isAppPage(details.requestingUrl) &&
-      details.isMainFrame && cameraOnly));
+    const allowed = Boolean(isAppPage(contents?.getURL()) && isAppPage(details.requestingUrl) &&
+      details.isMainFrame && cameraOnly);
+    // macOS delivers no frames until the app asks for camera access itself.
+    if (allowed && process.platform === 'darwin') {
+      systemPreferences.askForMediaAccess('camera').then(reply, () => reply(false));
+    } else reply(allowed);
   });
 
   ipcMain.handle('camera-fullscreen', (event, enabled) => {
