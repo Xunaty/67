@@ -1,0 +1,65 @@
+# Pushing a tag like v1.3.0 builds Windows and Mac on GitHub's machines and publishes the release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win32
+            folder: Farmador de Aura-win32-x64
+            label: Windows-x64
+          - os: macos-latest
+            platform: darwin
+            folder: Farmador de Aura-darwin-arm64
+            label: macOS-Apple-Silicon
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: node build-desktop.js ${{ matrix.platform }}
+      - name: Zip for Windows
+        if: matrix.platform == 'win32'
+        shell: pwsh
+        run: Compress-Archive -Path "dist/${{ matrix.folder }}" -DestinationPath "dist/Farmador-de-Aura-${{ matrix.label }}-${{ github.ref_name }}.zip"
+      - name: Zip for Mac
+        if: matrix.platform == 'darwin'
+        run: ditto -c -k --keepParent "dist/${{ matrix.folder }}" "dist/Farmador-de-Aura-${{ matrix.label }}-${{ github.ref_name }}.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" out/*.zip --repo "$GITHUB_REPOSITORY" --title "Farmador de Aura ${TAG#v}" --generate-notes --notes "Como instalar:
+
+          - **Windows x64:** baixe o ZIP do Windows, extraia a pasta inteira (pode apagar a versão antiga) e abra \`Farmador de Aura.exe\`. Se aparecer o aviso do SmartScreen, clique em **Mais informações → Executar assim mesmo**.
+          - **Mac Apple Silicon:** baixe o ZIP do Mac e abra \`Farmador de Aura.app\`.
+
+          Curtiu? Segue lá: [@IsraelMartinsAI](https://www.instagram.com/israelmartinsai/)"

@@ -14,10 +14,17 @@ export function wristSide(elbow, wrist) {
   return null;
 }
 
+const shoulderWidth = (pose) => Math.hypot(pose[11].x - pose[12].x, pose[11].y - pose[12].y);
+
+// People closest to the camera look biggest, so this skips whoever walks by in the background.
+export function closestPoses(poses = [], count = 1) {
+  return [...poses].sort((a, b) => shoulderWidth(b) - shoulderWidth(a)).slice(0, count);
+}
+
 // Battle mode: player 1 owns the left half of the mirrored screen, player 2 the right half.
 export function assignPlayers(poses = []) {
   const players = [undefined, undefined];
-  const placed = poses
+  const placed = closestPoses(poses, 2)
     .map((pose) => ({ pose, screenX: 1 - (pose[11].x + pose[12].x) / 2 }))
     .sort((a, b) => a.screenX - b.screenX);
   if (placed.length >= 2) [players[0], players[1]] = [placed[0].pose, placed[1].pose];
@@ -25,11 +32,21 @@ export function assignPlayers(poses = []) {
   return players;
 }
 
+export const COMBO_WINDOW_MS = 2000;
+
+// Fire level from how many points landed in the last two seconds: 0 none, 1 warm, 2 fire, 3 infinite aura.
+export function comboLevel(pointTimes, now) {
+  const recent = pointTimes.filter((time) => now - time < COMBO_WINDOW_MS).length;
+  return recent >= 7 ? 3 : recent >= 5 ? 2 : recent >= 3 ? 1 : 0;
+}
+
 export function createGestureCounter() {
   let sides;
+  let lastArm;
 
   function reset() {
     sides = ARMS.map(() => null);
+    lastArm = null;
   }
 
   function update(landmarks) {
@@ -45,7 +62,11 @@ export function createGestureCounter() {
       tracking = true;
       const side = wristSide(elbow, wrist);
       if (!side) return;
-      if (side === 'above' && sides[arm] === 'below') scored = true;
+      // The hands must take turns, so flapping one hand only scores once.
+      if (side === 'above' && sides[arm] === 'below' && arm !== lastArm) {
+        scored = true;
+        lastArm = arm;
+      }
       sides[arm] = side;
     });
     return { scored, tracking };

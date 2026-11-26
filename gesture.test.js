@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { assignPlayers, createGestureCounter } from './gesture.js';
+import { assignPlayers, closestPoses, comboLevel, createGestureCounter } from './gesture.js';
 
 // Elbows sit at y = 0.46; smaller y is higher on screen.
 function arms(leftWristY, rightWristY) {
@@ -57,10 +57,10 @@ test('forgets an arm that leaves the frame or after a restart', () => {
 
 test('splits battle players by the half of the mirrored screen they stand in', () => {
   // Camera x 0.75 shows on the left of the mirrored screen.
-  const person = (x) => {
+  const person = (x, width = 0.1) => {
     const pose = [];
-    pose[11] = { x: x + 0.05, y: 0.3 };
-    pose[12] = { x: x - 0.05, y: 0.3 };
+    pose[11] = { x: x + width / 2, y: 0.3 };
+    pose[12] = { x: x - width / 2, y: 0.3 };
     return pose;
   };
   const onLeft = person(0.75);
@@ -71,4 +71,36 @@ test('splits battle players by the half of the mirrored screen they stand in', (
   assert.deepEqual(assignPlayers([onLeft]), [onLeft, undefined]);
   assert.deepEqual(assignPlayers([]), [undefined, undefined]);
   assert.deepEqual(assignPlayers(undefined), [undefined, undefined]);
+
+  const background = person(0.5, 0.03);
+  assert.deepEqual(assignPlayers([background, onRight, onLeft]), [onLeft, onRight]);
+  assert.deepEqual(closestPoses([background, onRight]), [onRight]);
+});
+
+test('makes the hands take turns', () => {
+  const gesture = createGestureCounter();
+  gesture.update(bothDown);
+  assert.equal(gesture.update(leftUp).scored, true);
+  assert.equal(gesture.update(bothDown).scored, false);
+  assert.equal(gesture.update(leftUp).scored, false);
+  assert.equal(gesture.update(bothDown).scored, false);
+  assert.equal(gesture.update(rightUp).scored, true);
+});
+
+test('heats up with fast points and cools down when they stop', () => {
+  assert.equal(comboLevel([], 0), 0);
+  assert.equal(comboLevel([0, 300, 600], 700), 1);
+  assert.equal(comboLevel([0, 300, 600, 900, 1200], 1300), 2);
+  assert.equal(comboLevel([0, 250, 500, 750, 1000, 1250, 1500], 1600), 3);
+  assert.equal(comboLevel([0, 250, 500, 750, 1000, 1250, 1500], 3400), 0);
+});
+
+test('keeps the final moment and spreads the others', async () => {
+  const { pickMoments } = await import('./moments.js');
+  const shots = Array.from({ length: 20 }, (_, index) => index);
+  const picked = pickMoments(shots);
+  assert.equal(picked.length, 8);
+  assert.equal(picked[0], 0);
+  assert.equal(picked.at(-1), 19);
+  assert.deepEqual(pickMoments([1, 2]), [1, 2]);
 });

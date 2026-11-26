@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, session, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, session, shell, systemPreferences } from 'electron';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 
@@ -6,9 +6,11 @@ const origin = 'aura://local';
 const entry = `${origin}/`;
 const vision = 'node_modules/@mediapipe/tasks-vision';
 const routes = new Set([
-  'index.html', 'style.css', 'fullscreen.css', 'app.js', 'camera.js', 'gesture.js',
-  'fullscreen.js', 'overlay.js', 'assets/gesto-67.webp', 'assets/tigre-arco-iris.webp',
-  'assets/farmou-aura.mp3', 'assets/pose-landmarker-lite.task', `${vision}/vision_bundle.mjs`,
+  'index.html', 'style.css', 'fullscreen.css', 'fonts.css', 'app.js', 'camera.js', 'gesture.js',
+  'fullscreen.js', 'overlay.js', 'effects.js', 'moments.js', 'assets/gesto-67.webp',
+  'assets/tigre-arco-iris.webp', 'assets/instagram-qr.svg', 'assets/farmou-aura.mp3',
+  'assets/pose-landmarker-lite.task', `${vision}/vision_bundle.mjs`,
+  ...['barlow-condensed-700', 'barlow-condensed-800', 'dm-sans'].map((font) => `assets/fonts/${font}.woff2`),
   ...['vision_wasm_internal', 'vision_wasm_nosimd_internal'].flatMap((file) => [
     `${vision}/wasm/${file}.js`, `${vision}/wasm/${file}.wasm`,
   ]),
@@ -17,12 +19,13 @@ const mimeTypes = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.wasm': 'application/wasm',
-  '.task': 'application/octet-stream',
+  '.task': 'application/octet-stream', '.svg': 'image/svg+xml', '.woff2': 'font/woff2',
 };
+const instagramUrl = 'https://www.instagram.com/israelmartinsai/';
 const contentPolicy = [
   "default-src 'none'", "script-src 'self' 'wasm-unsafe-eval'",
-  "style-src 'self' https://fonts.googleapis.com", 'font-src https://fonts.gstatic.com',
-  "img-src 'self'", "media-src 'self'", "connect-src 'self'",
+  "style-src 'self'", "font-src 'self'",
+  "img-src 'self' data:", "media-src 'self'", "connect-src 'self'",
   "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'",
 ].join('; ');
 
@@ -90,6 +93,11 @@ app.whenReady().then(() => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (process.platform === 'darwin') window?.setSimpleFullScreen(enabled);
     else window?.setFullScreen(enabled);
+  });
+
+  // Only ever opens the fixed Instagram profile, never a URL from the page.
+  ipcMain.handle('open-instagram', (event) => {
+    if (event.senderFrame?.url === entry) void shell.openExternal(instagramUrl);
   });
 
   createWindow();

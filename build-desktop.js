@@ -6,7 +6,8 @@ if (!['darwin', 'win32'].includes(platform)) throw new Error('Escolha darwin ou 
 const mac = platform === 'darwin';
 const bundledPaths = [
   '/package.json', '/desktop.js', '/desktop-preload.cjs', '/index.html', '/style.css', '/fullscreen.css',
-  '/app.js', '/camera.js', '/gesture.js', '/overlay.js', '/fullscreen.js', '/assets',
+  '/fonts.css', '/app.js', '/camera.js', '/gesture.js', '/overlay.js', '/fullscreen.js',
+  '/effects.js', '/moments.js', '/assets',
   '/node_modules/@mediapipe/tasks-vision',
 ];
 
