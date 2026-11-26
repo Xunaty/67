@@ -1,68 +1,42 @@
-const ARM_LANDMARKS = [11, 12, 13, 14, 15, 16];
-const HOLD_MS = 55;
-const SWITCH_MS = 145;
-const REACQUIRE_MS = 650;
+// Left arm: elbow 13, wrist 15. Right arm: elbow 14, wrist 16.
+const ARMS = [[13, 15], [14, 16]];
 
 export function isVisibleLandmark(point) {
   return point && point.x >= 0 && point.x <= 1 &&
     point.y >= 0 && point.y <= 1 && (point.visibility ?? 1) >= 0.5;
 }
 
+// The wrist must clear the elbow line by this share of the forearm, so jitter on the line never counts.
+export function wristSide(elbow, wrist) {
+  const margin = Math.max(0.01, Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y) * 0.12);
+  if (wrist.y < elbow.y - margin) return 'above';
+  if (wrist.y > elbow.y + margin) return 'below';
+  return null;
+}
+
 export function createGestureCounter() {
-  let previous;
-  let candidate;
-  let lastStanceAt;
+  let sides;
 
   function reset() {
-    previous = null;
-    candidate = null;
-    lastStanceAt = -Infinity;
+    sides = ARMS.map(() => null);
   }
 
-  function update(landmarks, now) {
-    if (now - lastStanceAt >= REACQUIRE_MS) reset();
-
-    const arms = ARM_LANDMARKS.map((index) => landmarks?.[index]);
-    const tracking = arms.every(isVisibleLandmark);
-    let stance = null;
-
-    if (tracking) {
-      const [leftShoulder, rightShoulder, leftElbow, rightElbow, leftWrist, rightWrist] = arms;
-      const leftHeight = leftShoulder.y - leftWrist.y;
-      const rightHeight = rightShoulder.y - rightWrist.y;
-      const scale = Math.max(0.07, (leftElbow.y + rightElbow.y -
-        leftShoulder.y - rightShoulder.y) / 2);
-      const distance = leftHeight - rightHeight;
-      const forearmsUp = leftWrist.y <= leftElbow.y + scale * 0.45 &&
-        rightWrist.y <= rightElbow.y + scale * 0.45;
-
-      // Pose landmarks measure the seesaw motion; palm rotation needs hand landmarks.
-      if (forearmsUp && Math.abs(distance) >= scale * 0.28) {
-        stance = { side: Math.sign(distance), leftHeight, rightHeight, scale, now };
+  function update(landmarks) {
+    let scored = false;
+    let tracking = false;
+    ARMS.forEach(([elbowIndex, wristIndex], arm) => {
+      const elbow = landmarks?.[elbowIndex];
+      const wrist = landmarks?.[wristIndex];
+      if (!isVisibleLandmark(elbow) || !isVisibleLandmark(wrist)) {
+        sides[arm] = null;
+        return;
       }
-    }
-
-    if (!stance) {
-      candidate = null;
-      return { scored: false, tracking };
-    }
-
-    lastStanceAt = now;
-    if (stance.side !== candidate?.side) candidate = stance;
-    if (now - candidate.now < HOLD_MS) return { scored: false, tracking };
-
-    if (!previous || stance.side === previous.side) {
-      previous = { ...stance, now: previous?.now ?? now };
-      return { scored: false, tracking };
-    }
-
-    const leftTravel = (stance.leftHeight - previous.leftHeight) * stance.side;
-    const rightTravel = (previous.rightHeight - stance.rightHeight) * stance.side;
-    const minTravel = Math.min(previous.scale, stance.scale) * 0.14;
-    const scored = now - previous.now >= SWITCH_MS &&
-      leftTravel >= minTravel && rightTravel >= minTravel;
-
-    if (scored) previous = stance;
+      tracking = true;
+      const side = wristSide(elbow, wrist);
+      if (!side) return;
+      if (side === 'above' && sides[arm] === 'below') scored = true;
+      sides[arm] = side;
+    });
     return { scored, tracking };
   }
 

@@ -1,4 +1,4 @@
-import { isVisibleLandmark } from './gesture.js';
+import { isVisibleLandmark, wristSide } from './gesture.js';
 
 const arms = [
   { joints: [11, 13, 15], color: '#e6fa77' },
@@ -39,6 +39,21 @@ export function createArmOverlay(canvas, video) {
         const { x, y } = landmarks[joint];
         return [left + (1 - x) * imageWidth, top + y * imageHeight];
       });
+
+      // Elbow line: the wrist scores when it rises past it, and the line lights up while it is above.
+      const [elbowX, elbowY] = points[1];
+      const reach = Math.max(40, Math.hypot(points[2][0] - elbowX, points[2][1] - elbowY) * 1.3);
+      const above = wristSide(landmarks[joints[1]], landmarks[joints[2]]) === 'above';
+      context.beginPath();
+      context.moveTo(elbowX - reach, elbowY);
+      context.lineTo(elbowX + reach, elbowY);
+      context.setLineDash([]);
+      context.lineWidth = 6;
+      context.strokeStyle = '#151027';
+      context.stroke();
+      context.lineWidth = 3;
+      context.strokeStyle = above ? color : '#fcf7ffb3';
+      context.stroke();
 
       context.beginPath();
       context.moveTo(...points[0]);

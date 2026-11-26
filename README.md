@@ -1,13 +1,13 @@
 # Farmador de Aura
 
-Jogo de webcam para macOS e Windows. Faça o movimento 6–7 e ganhe um ponto de aura a cada troca de mão. Aos 1.000 pontos, um tigre com arco-íris comemora com você.
+Jogo de webcam para macOS e Windows. Faça o movimento 6–7 e ganhe um ponto de aura cada vez que uma mão sobe da linha do cotovelo. Aos 1.000 pontos, um tigre com arco-íris comemora com você.
 
 ## Como jogar
 
 1. Baixe a versão do seu sistema na [página de releases](https://github.com/Xunaty/67/releases).
 2. No Mac com Apple Silicon, abra **Farmador de Aura.app**. No Windows x64, extraia o ZIP inteiro e abra **Farmador de Aura.exe**.
 3. Clique em **Ligar câmera** e permita o acesso quando solicitado. Deixe ombros, cotovelos e pulsos no quadro.
-4. Com as palmas viradas para cima, suba uma mão enquanto a outra desce. A primeira posição serve de referência para o contador.
+4. Suba uma mão enquanto a outra desce. Cada braço tem uma linha na altura do cotovelo, e conta +1 toda vez que a mão passa de baixo para cima dela. A linha acende quando a mão está acima.
 
 Clique no botão de quatro cantos na webcam para jogar em tela cheia. O placar fica no alto da imagem, e o traçado mostra onde o detector vê cada braço. O MediaPipe processa a câmera no próprio computador.
 

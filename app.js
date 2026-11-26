@@ -172,8 +172,8 @@ cameraButton.addEventListener('click', async () => {
 
   try {
     await startCamera(video, {
-      onFrame(landmarks, time) {
-        const { scored, tracking } = gesture.update(landmarks, time);
+      onFrame(landmarks) {
+        const { scored, tracking } = gesture.update(landmarks);
         armOverlay.update(landmarks);
         setStatus(tracking ? 'Braços detectados' : 'Enquadre os braços', tracking);
         if (scored) awardPoint();
